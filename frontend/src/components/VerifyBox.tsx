@@ -1,25 +1,87 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+"use client";
+
+import { useState } from "react";
 
 export default function VerifyBox() {
+  const [claim, setClaim] = useState("");
+  const [result, setResult] = useState("");
+
+  async function verifyClaim() {
+    if (!claim.trim()) return;
+
+    const response = await fetch("http://127.0.0.1:8000/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        claim: claim,
+      }),
+    });
+
+    const data = await response.json();
+    setResult(data.result || JSON.stringify(data));
+  }
+
   return (
-    <div className="mx-auto mt-12 w-full max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-lg">
-      <div className="flex flex-col gap-4 md:flex-row">
-        <Input
-          placeholder="Paste a claim, news article, URL, or statement..."
-          className="h-12 text-base"
+    <div className="w-full flex justify-center mt-10">
+      <div className="w-full max-w-2xl">
+
+        <textarea
+          value={claim}
+          onChange={(e) => setClaim(e.target.value)}
+          placeholder="Enter a claim to verify..."
+          className="
+          w-full
+          min-h-[120px]
+          rounded-xl
+          border
+          border-white/20
+          bg-black/40
+          px-5
+          py-4
+          text-white
+          placeholder:text-gray-400
+          outline-none
+          focus:border-white
+          "
         />
 
-        <Button className="h-12 px-8">
-          <Search className="mr-2 h-4 w-4" />
-          Verify
-        </Button>
-      </div>
+        <button
+          onClick={verifyClaim}
+          className="
+          mt-4
+          w-full
+          rounded-xl
+          bg-white
+          py-3
+          text-black
+          font-semibold
+          hover:bg-gray-200
+          transition
+          "
+        >
+          Verify Claim
+        </button>
 
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        Supports text, URLs, articles and social media posts.
-      </p>
+
+        {result && (
+          <div
+          className="
+          mt-6
+          rounded-xl
+          border
+          border-white/20
+          bg-white/5
+          p-5
+          text-white
+          "
+          >
+            {result}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
