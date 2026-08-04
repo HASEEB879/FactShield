@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 
+interface VerificationResult {
+  claim: string;
+  verdict: string;
+  confidence: number;
+  explanation: string;
+  sources: string[];
+}
+
 export default function VerifyBox() {
   const [claim, setClaim] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<VerificationResult | null>(null);
 
   async function verifyClaim() {
     if (!claim.trim()) return;
@@ -20,7 +28,7 @@ export default function VerifyBox() {
     });
 
     const data = await response.json();
-    setResult(data.result || JSON.stringify(data));
+    setResult(data);
   }
 
   return (
@@ -66,18 +74,28 @@ export default function VerifyBox() {
 
 
         {result && (
-          <div
-          className="
-          mt-6
-          rounded-xl
-          border
-          border-white/20
-          bg-white/5
-          p-5
-          text-white
-          "
-          >
-            {result}
+          <div className="mt-6 rounded-xl border border-white/20 bg-white/5 p-5 text-white">
+            <div className="flex items-center justify-between gap-4">
+              <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-black">
+                {result.verdict}
+              </span>
+              <span className="text-sm text-gray-300">
+                Confidence: {result.confidence}%
+              </span>
+            </div>
+
+            <p className="mt-4 leading-7 text-gray-100">{result.explanation}</p>
+
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-300">
+                Sources
+              </h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-100">
+                {result.sources.map((source) => (
+                  <li key={source}>{source}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 
