@@ -1,6 +1,8 @@
 import json
 import os
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from groq import AsyncGroq
@@ -37,8 +39,35 @@ def _get_client() -> AsyncGroq:
     return AsyncGroq(api_key=api_key)
 
 
-async def analyze_claim(claim: str) -> dict[str, object]:
+async def analyze_claim(
+    claim: str, evidence: Mapping[str, Any] | None = None
+) -> dict[str, object]:
     """Analyze a claim with Groq and return the API's existing result fields."""
+    evidence_bundle = dict(evidence or {})
+    if not evidence_bundle:
+        evidence_bundle = {
+            "status": "unavailable",
+            "evidence": [],
+            "summary": "No evidence bundle was provided for this claim.",
+        }
+
+    prompt = f"""
+Claim:
+{claim}
+
+Evidence collected:
+{json.dumps(evidence_bundle, ensure_ascii=False)}
+
+Instructions:
+- Evaluate the claim using the provided evidence as the primary basis.
+- Do not rely only on internal knowledge.
+- If evidence is unavailable, incomplete, or insufficient, say so clearly and
+  lower the confidence appropriately.
+- Use source names from the evidence bundle when they support the explanation;
+  do not invent citations.
+- Return structured JSON only.
+""".strip()
+
     response = await _get_client().chat.completions.create(
         model=GROQ_MODEL,
         temperature=0.2,
@@ -48,13 +77,14 @@ async def analyze_claim(claim: str) -> dict[str, object]:
                 "role": "system",
                 "content": (
                     "You are a careful fact-checking assistant. Return only a JSON "
-                    "object with verdict (string), confidence (integer 0-100), "
+                    "object with verdict (exactly one of True, False, Misleading, "
+                    "or Insufficient Evidence), confidence (integer 0-100), "
                     "explanation (string), and sources (array of strings). Do not "
-                    "invent citations. If evidence is uncertain or insufficient, say "
-                    "so clearly and lower the confidence."
+                    "invent citations. Follow the evidence and instructions supplied "
+                    "by the user message."
                 ),
             },
-            {"role": "user", "content": f"Analyze this claim: {claim}"},
+            {"role": "user", "content": prompt},
         ],
     )
 

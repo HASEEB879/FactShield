@@ -9,3 +9,5 @@ export interface VerifyResponse {
   explanation: string;
   sources: string[];
 }
+
+export type VerificationResult = VerifyResponse;
