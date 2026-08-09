@@ -7,7 +7,10 @@ export interface VerifyResponse {
   verdict: string;
   confidence: number;
   explanation: string;
+  answer?: string;
   sources: string[];
+  intent?: string;
+  search_query?: string;
 }
 
 export type VerificationResult = VerifyResponse;

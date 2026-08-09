@@ -1,95 +1,159 @@
-"""Search abstractions for collecting verification evidence.
+"""Professional live search service using Tavily."""
 
-The default provider is intentionally deterministic and mocked. Production providers
-such as Google Custom Search, Bing Web Search, or SerpAPI can implement the
-``SearchProvider`` protocol without changing callers.
-"""
-
+import os
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Protocol
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from tavily import TavilyClient
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BACKEND_DIR / ".env")
 
 
 class SearchEvidence(BaseModel):
-    """A normalized result returned by any evidence-search provider."""
-
     title: str
     source: str
     domain: str
     url: str
     snippet: str
+    raw_content: str | None = None
+    score: float = 0
     provider: str
     is_mock: bool = False
 
 
 class SearchProvider(Protocol):
-    """Provider contract for future external search integrations."""
+    async def search(
+        self,
+        claim: str,
+        limit: int = 15,
+    ) -> Sequence[SearchEvidence]:
+        ...
 
-    async def search(self, claim: str, limit: int = 5) -> Sequence[SearchEvidence]:
-        """Return normalized evidence candidates for a claim."""
 
+class TavilyProvider:
 
-class MockSearchProvider:
-    """Deterministic placeholder provider for local development and service tests."""
+    def __init__(self):
 
-    _RESULTS = (
-        SearchEvidence(
-            title="Earth Fact Sheet",
-            source="NASA",
-            domain="nasa.gov",
-            url="https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html",
-            snippet="Mock search evidence from an authoritative scientific source.",
-            provider="mock",
-            is_mock=True,
-        ),
-        SearchEvidence(
-            title="Earth | Definition, Size, Composition, Temperature, Mass, & Facts",
-            source="Encyclopaedia Britannica",
-            domain="britannica.com",
-            url="https://www.britannica.com/place/Earth",
-            snippet="Mock reference evidence returned for service integration testing.",
-            provider="mock",
-            is_mock=True,
-        ),
-        SearchEvidence(
-            title="Earth observation",
-            source="European Space Agency",
-            domain="esa.int",
-            url="https://www.esa.int/Applications/Observing_the_Earth",
-            snippet="Mock space-agency evidence returned for service integration testing.",
-            provider="mock",
-            is_mock=True,
-        ),
-    )
+        api_key = os.getenv("TAVILY_API_KEY")
 
-    async def search(self, claim: str, limit: int = 5) -> Sequence[SearchEvidence]:
-        """Return a bounded set of normalized mock results.
+        if not api_key:
+            raise RuntimeError(
+                "TAVILY_API_KEY missing."
+            )
 
-        ``claim`` is deliberately accepted now so the future provider interface stays
-        stable even though mock data is not yet query-specific.
-        """
-        del claim
-        return self._RESULTS[: max(0, limit)]
+        self.client = TavilyClient(api_key=api_key)
+
+    async def search(
+        self,
+        claim: str,
+        limit: int = 15,
+    ) -> Sequence[SearchEvidence]:
+
+        print("\n" + "=" * 80)
+        print("FACTSHIELD ADVANCED SEARCH")
+        print("=" * 80)
+        print("Claim:", claim)
+        print()
+
+        response = self.client.search(
+            query=claim,
+
+            search_depth="advanced",
+
+            topic="general",
+
+            max_results=limit,
+
+            include_answer=True,
+
+            include_images=False,
+
+            include_raw_content=True,
+        )
+
+        results = []
+
+        for item in response.get("results", []):
+
+            url = item.get("url", "")
+
+            title = item.get("title", "")
+
+            snippet = item.get("content", "")
+
+            raw = item.get("raw_content", "")
+
+            score = float(item.get("score", 0))
+
+            domain = urlparse(url).netloc.replace("www.", "")
+
+            source = domain.split(".")[0].title()
+
+            print("----------------------------------------")
+            print("TITLE :", title)
+            print("DOMAIN:", domain)
+            print("SCORE :", score)
+            print()
+
+            results.append(
+                SearchEvidence(
+                    title=title,
+                    source=source,
+                    domain=domain,
+                    url=url,
+                    snippet=snippet,
+                    raw_content=raw,
+                    score=score,
+                    provider="tavily",
+                    is_mock=False,
+                )
+            )
+
+        results.sort(
+            key=lambda x: x.score,
+            reverse=True,
+        )
+
+        print(f"\nEvidence collected: {len(results)}")
+
+        return results
 
 
 class SearchService:
-    """Application-facing search service with a swappable provider."""
 
-    def __init__(self, provider: SearchProvider | None = None) -> None:
-        self._provider = provider or MockSearchProvider()
+    def __init__(self):
+        self.provider = TavilyProvider()
 
     async def find_evidence(
-        self, claim: str, limit: int = 5
+        self,
+        claim: str,
+        limit: int = 15,
     ) -> list[SearchEvidence]:
-        normalized_claim = claim.strip()
-        if not normalized_claim:
+
+        claim = claim.strip()
+
+        if not claim:
             return []
 
-        results = await self._provider.search(normalized_claim, limit=limit)
-        return list(results)
+        return list(
+            await self.provider.search(
+                claim,
+                limit,
+            )
+        )
 
 
-async def search_claim(claim: str, limit: int = 5) -> list[SearchEvidence]:
-    """Convenience entry point for the default evidence-search service."""
-    return await SearchService().find_evidence(claim, limit=limit)
+async def search_claim(
+    claim: str,
+    limit: int = 15,
+) -> list[SearchEvidence]:
+
+    return await SearchService().find_evidence(
+        claim,
+        limit,
+    )

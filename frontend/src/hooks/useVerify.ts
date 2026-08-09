@@ -10,14 +10,20 @@ export function useVerify() {
 
   async function verify() {
     const normalizedClaim = claim.trim();
-    if (!normalizedClaim) return;
+
+    if (!normalizedClaim || loading) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const response = await verifyClaim({ claim: normalizedClaim });
+      const response = await verifyClaim({
+        claim: normalizedClaim,
+      });
+
       setResult(response);
     } catch (caughtError) {
       setError(
