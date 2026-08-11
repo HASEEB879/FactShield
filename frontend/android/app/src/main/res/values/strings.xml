@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FactShield</string>
+    <string name="title_activity_main">FactShield</string>
+    <string name="package_name">com.factshield.app</string>
+    <string name="custom_url_scheme">com.factshield.app</string>
+</resources>

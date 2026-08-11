@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ContactButton from "./ContactButton";
 import Container from "@/components/shared/Container";
 import { ShieldCheck } from "lucide-react";
 
@@ -38,7 +39,7 @@ export default function Footer() {
             <div className="flex flex-col gap-2 text-muted-foreground">
               <Link href="#">About</Link>
               <Link href="#">Privacy</Link>
-              <Link href="#">Contact</Link>
+              <ContactButton />
             </div>
           </div>
         </div>
