@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.verify import router
+from backend.app.api.verify import router
 app = FastAPI(
     title="FactShield API"
 )

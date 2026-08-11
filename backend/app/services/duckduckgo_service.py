@@ -1,6 +1,6 @@
 from ddgs import DDGS
 
-from app.services.search_service import SearchEvidence
+from backend.app.services.search_service import SearchEvidence
 
 
 class DuckDuckGoService:

@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.services.search_service import SearchEvidence
-from app.services.source_service import score_source
+from backend.app.services.search_service import SearchEvidence
+from backend.app.services.source_service import score_source
 
 
 class EvidenceItem(BaseModel):

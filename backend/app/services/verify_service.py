@@ -1,11 +1,11 @@
 from typing import Any
 
-from app.services.ai_service import analyze_claim
-from app.services.duckduckgo_service import duckduckgo_service
-from app.services.evidence_service import prepare_evidence_summary
-from app.services.intent_service import analyze_query_intent
-from app.services.search_service import search_claim
-from app.services.wikipedia_service import wiki_service
+from backend.app.services.ai_service import analyze_claim
+from backend.app.services.duckduckgo_service import duckduckgo_service
+from backend.app.services.evidence_service import prepare_evidence_summary
+from backend.app.services.intent_service import analyze_query_intent
+from backend.app.services.search_service import search_claim
+from backend.app.services.wikipedia_service import wiki_service
 
 
 MAX_AI_EVIDENCE = 8

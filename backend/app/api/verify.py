@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.verify_service import verify_claim
+from backend.app.services.verify_service import verify_claim
 
 
 router = APIRouter(
