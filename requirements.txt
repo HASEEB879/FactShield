@@ -1,11 +1,11 @@
-﻿fastapi
+fastapi
+uvicorn
 pydantic
 python-dotenv
-httpx
-requests
-tavily-python
 google-genai
 groq
+tavily-python
 ddgs
 Wikipedia-API
-uvicorn
+requests
+httpx
